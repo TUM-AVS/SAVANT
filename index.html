@@ -1,0 +1,2034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Can VLMs Unlock Semantic Anomaly Detection? A Framework for Structured Reasoning</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Noto Sans', sans-serif;
+      color: #333;
+      background: #fff;
+      line-height: 1.65;
+      font-size: 1rem;
+    }
+
+    /* ===== Hero ===== */
+    .hero {
+      background: #fff;
+      padding: 4rem 2rem 2.5rem;
+      text-align: center;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .hero h1 {
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: #222;
+      letter-spacing: -0.5px;
+      margin-bottom: 0.3rem;
+    }
+    .hero .acronym {
+      font-size: 1.05rem;
+      color: #555;
+      margin-bottom: 1.2rem;
+    }
+    .hero .authors {
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 0.3rem;
+    }
+    .hero .affiliations {
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 1.5rem;
+    }
+    .hero-links {
+      display: flex;
+      gap: 0.6rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* Pill buttons */
+    .btn-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1.3rem;
+      border-radius: 20px;
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: background 0.2s, box-shadow 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-dark {
+      background: #363636;
+      color: #fff;
+    }
+    .btn-dark:hover {
+      background: #222;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    }
+    .btn-disabled {
+      background: #d5d5d5;
+      color: #888;
+      cursor: default;
+    }
+
+    /* Dropdowns */
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 240px;
+      z-index: 200;
+      padding-top: 0.4rem;
+    }
+    .dropdown-content-inner {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      overflow: hidden;
+      border: 1px solid #eee;
+    }
+    .dropdown:hover .dropdown-content,
+    .dropdown:focus-within .dropdown-content {
+      display: block;
+    }
+    .dropdown-content a {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1rem;
+      color: #333;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 400;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.15s;
+    }
+    .dropdown-content a:last-child { border-bottom: none; }
+    .dropdown-content a:hover { background: #f9f9f9; }
+    .dropdown-content .dropdown-note {
+      padding: 0.8rem 1rem;
+      font-size: 0.85rem;
+      color: #888;
+      text-align: center;
+    }
+
+    /* ===== Container ===== */
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    /* ===== Sections ===== */
+    section {
+      padding: 2.5rem 0;
+    }
+    section + section {
+      border-top: 1px solid #eee;
+    }
+
+    /* ===== Typography ===== */
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #222;
+      margin-bottom: 1rem;
+    }
+    h3 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #333;
+      margin: 1.5rem 0 0.6rem;
+    }
+    h4 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #444;
+      margin: 1rem 0 0.4rem;
+    }
+    p { margin-bottom: 0.75rem; }
+    ul, ol { margin: 0.5rem 0 0.8rem 1.5rem; }
+    li { margin-bottom: 0.3rem; }
+    a { color: #4a6fa5; }
+
+    /* ===== Stat cards ===== */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .stat-card {
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 1.2rem;
+      text-align: center;
+    }
+    .stat-card .number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #4a6fa5;
+    }
+    .stat-card .label {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 0.2rem;
+    }
+
+    /* ===== Figures ===== */
+    .figure {
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+    .figure img {
+      max-width: 100%;
+      border-radius: 4px;
+    }
+    .figure figcaption, .figure .caption {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 0.5rem;
+      font-style: italic;
+      max-width: 720px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ===== Code blocks ===== */
+    pre {
+      background: #f5f5f5;
+      border: 1px solid #e8e8e8;
+      border-radius: 6px;
+      padding: 1rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      margin: 0.8rem 0;
+    }
+    code {
+      font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+      font-size: 0.8rem;
+    }
+    p code, li code {
+      background: #f5f5f5;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.82em;
+    }
+    .code-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.3rem;
+    }
+
+    /* ===== Collapsible ===== */
+    details {
+      margin: 0.8rem 0;
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    summary {
+      padding: 0.8rem 1rem;
+      background: #fafafa;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+      user-select: none;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.15s;
+    }
+    summary:hover { background: #f2f2f2; }
+    summary::before {
+      content: '\25B6';
+      font-size: 0.65rem;
+      color: #888;
+      transition: transform 0.2s;
+    }
+    details[open] > summary::before {
+      transform: rotate(90deg);
+    }
+    summary::-webkit-details-marker { display: none; }
+    details > .details-content {
+      padding: 1rem;
+      border-top: 1px solid #e8e8e8;
+    }
+
+    /* ===== Architecture diagram ===== */
+    .arch-diagram {
+      text-align: center;
+      margin: 1rem 0;
+    }
+    .arch-diagram img {
+      max-width: 500px;
+      width: 100%;
+    }
+
+    /* ===== Tables ===== */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.88rem;
+    }
+    th, td {
+      padding: 0.5rem 0.8rem;
+      border: 1px solid #e8e8e8;
+      text-align: center;
+    }
+    th {
+      background: #f5f5f5;
+      color: #333;
+      font-weight: 600;
+    }
+    tr:nth-child(even) { background: #fafafa; }
+
+    /* ===== Examples grid ===== */
+    .examples-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .examples-grid .example-item {
+      text-align: center;
+    }
+    .examples-grid img {
+      width: 100%;
+      border-radius: 4px;
+    }
+    .examples-grid .caption {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 0.3rem;
+    }
+
+    /* ===== Method tag ===== */
+    .method-tag {
+      font-family: 'SFMono-Regular', 'Consolas', monospace;
+      background: #363636;
+      color: white;
+      padding: 0.15rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+
+    /* ===== Prediction boxes ===== */
+    .prediction-box {
+      border-left: 4px solid;
+      padding: 0.8rem 1rem;
+      margin: 0.8rem 0;
+      border-radius: 0 6px 6px 0;
+    }
+    .prediction-box.correct {
+      border-left-color: #27ae60;
+      background: #f0fdf4;
+    }
+    .prediction-box.incorrect {
+      border-left-color: #e74c3c;
+      background: #fef2f2;
+    }
+    .prediction-label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+    }
+
+    /* ===== Badges ===== */
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-correct { background: #d4edda; color: #155724; }
+    .badge-incorrect { background: #f8d7da; color: #721c24; }
+
+    /* ===== Supplementary badge ===== */
+    .supp-badge {
+      display: inline-block;
+      background: #f0ad4e;
+      color: white;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      vertical-align: middle;
+      margin-right: 0.3rem;
+    }
+
+    /* ===== Citation ===== */
+    .citation-block {
+      background: #f5f5f5;
+      border: 1px solid #e8e8e8;
+      border-radius: 6px;
+      padding: 1rem;
+      font-family: monospace;
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+      position: relative;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      padding: 0.3rem 0.6rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: background 0.15s;
+    }
+    .copy-btn:hover { background: #f5f5f5; }
+
+    /* ===== Resource cards ===== */
+    .resource-group { margin-bottom: 1.5rem; }
+    .resource-group h3 { margin-bottom: 0.8rem; }
+    .resource-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .resource-item {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.8rem 1rem;
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      text-decoration: none;
+      color: #333;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .resource-item:hover {
+      border-color: #4a6fa5;
+      box-shadow: 0 2px 8px rgba(74,111,165,0.1);
+    }
+    .resource-item .ri-icon { flex-shrink: 0; }
+    .resource-item .ri-name { font-weight: 600; font-size: 0.9rem; }
+    .resource-item .ri-desc { font-size: 0.8rem; color: #666; }
+
+    /* ===== Footer ===== */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.85rem;
+      color: #999;
+      border-top: 1px solid #eee;
+      margin-top: 1rem;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      .hero { padding: 2.5rem 1.5rem 2rem; }
+      .hero h1 { font-size: 2rem; }
+      .hero-links { flex-direction: column; align-items: center; }
+      .examples-grid { grid-template-columns: 1fr; }
+      .card-grid { grid-template-columns: 1fr 1fr; }
+      .container { padding: 0 1.2rem; }
+    }
+    @media (max-width: 480px) {
+      .card-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- HERO -->
+<!-- ============================================================ -->
+<div class="hero">
+  <h1>Can VLMs Unlock Semantic Anomaly Detection? A Framework for Structured Reasoning</h1>
+  <div class="acronym">SAVANT: Semantic Anomaly Verification/Analysis Toolkit</div>
+  <div class="authors">Anonymous Authors</div>
+  <div class="hero-links">
+    <div class="dropdown">
+      <a href="#abstract" class="btn-pill btn-dark"><i class="fa-solid fa-file-lines"></i> Paper <i class="fa-solid fa-caret-down" style="font-size:0.7rem;margin-left:0.1rem;"></i></a>
+      <div class="dropdown-content"><div class="dropdown-content-inner">
+        <div class="dropdown-note">Currently under peer review</div>
+      </div></div>
+    </div>
+    <div class="dropdown">
+      <a href="#links" class="btn-pill btn-dark"><i class="fa-solid fa-database"></i> Datasets <i class="fa-solid fa-caret-down" style="font-size:0.7rem;margin-left:0.1rem;"></i></a>
+      <div class="dropdown-content"><div class="dropdown-content-inner">
+        <a href="https://huggingface.co/datasets/u94fmn391j/SAVANT-CODALM-small" target="_blank">&#129303; CODALM-small <span style="color:#888;font-size:0.75rem;margin-left:auto;">100 images</span></a>
+        <a href="https://huggingface.co/datasets/u94fmn391j/SAVANT-CODALM-medium" target="_blank">&#129303; CODALM-medium <span style="color:#888;font-size:0.75rem;margin-left:auto;">5,078 images</span></a>
+        <a href="https://huggingface.co/datasets/u94fmn391j/SAVANT-CODALM-large" target="_blank">&#129303; CODALM-large <span style="color:#888;font-size:0.75rem;margin-left:auto;">9,640 images</span></a>
+      </div></div>
+    </div>
+    <div class="dropdown">
+      <a href="#links" class="btn-pill btn-dark"><i class="fa-solid fa-cube"></i> Models <i class="fa-solid fa-caret-down" style="font-size:0.7rem;margin-left:0.1rem;"></i></a>
+      <div class="dropdown-content"><div class="dropdown-content-inner">
+        <a href="https://huggingface.co/u94fmn391j/SAVANT-scene-description-lora" target="_blank">&#129303; Scene Description</a>
+        <a href="https://huggingface.co/u94fmn391j/SAVANT-anomaly-classifier-lora" target="_blank">&#129303; Anomaly Classifier</a>
+        <a href="https://huggingface.co/u94fmn391j/SAVANT-multimodal-evaluation-lora" target="_blank">&#129303; Multimodal Evaluation</a>
+      </div></div>
+    </div>
+    <span class="btn-pill btn-disabled"><i class="fa-brands fa-github"></i> Code (coming soon)</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ============================================================ -->
+<!-- ABSTRACT -->
+<!-- ============================================================ -->
+<section id="abstract">
+  <h2>Abstract</h2>
+  <p>Autonomous driving systems remain critically vulnerable to the long-tail of rare, out-of-distribution semantic anomalies. While VLMs have emerged as promising tools for perception, their application in anomaly detection remains largely restricted to prompting proprietary models &mdash; limiting reliability, reproducibility, and deployment feasibility.</p>
+  <p>To address this gap, we introduce <strong>SAVANT</strong>, a novel model-agnostic reasoning framework that reformulates anomaly detection as a layered semantic consistency verification. By applying SAVANT's two-phase pipeline &mdash; structured scene description extraction and multi-modal evaluation &mdash; existing VLMs achieve significantly higher scores in detecting anomalous driving scenarios from input images. Our approach replaces ad hoc prompting with semantic-aware reasoning, transforming VLM-based detection into a principled decomposition across four semantic domains: <em>Street</em>, <em>Infrastructure</em>, <em>Movable Objects</em>, and <em>Environment</em>.</p>
+  <p>We show that across a balanced set of real-world driving scenarios, applying SAVANT improves VLM absolute recall by approximately 18.5% compared to prompting baselines. Moreover, this gain enables reliable large-scale annotation: leveraging the best proprietary model within our framework, we automatically labeled around 10,000 real-world images with high confidence. The resulting high-quality dataset was further used to fine-tune a 7B open-source model (Qwen2.5-VL) to perform single-shot anomaly detection, achieving <strong>90.8% recall</strong> and <strong>93.8% accuracy</strong> &mdash; surpassing all models evaluated while enabling local deployment at near-zero cost.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- FRAMEWORK OVERVIEW -->
+<!-- ============================================================ -->
+<section id="framework">
+  <h2>Framework Overview</h2>
+  <div class="figure">
+    <img src="assets/framework_overview_3.png" alt="SAVANT Framework Overview">
+    <div class="caption">SAVANT data-model refinement cycle. The architecture operates in two structured phases: (1) Scene Decomposition into Semantic Domains and (2) Joint Anomaly Evaluation conditioned on both the image and aggregated layer descriptions. Predictions undergo Human-in-the-Loop verification to curate high-quality labels for fine-tuning a compact VLM.</div>
+  </div>
+
+  <h3>Semantic Anomaly Formulation</h3>
+  <p>Unlike conventional out-of-distribution detection that identifies unknown objects, <strong>semantic anomalies</strong> involve familiar elements in contextually invalid configurations. A traffic light on a truck or a stop sign on a billboard are both composed of common driving objects, but their relationships violate expected contextual constraints.</p>
+
+  <div class="examples-grid">
+    <div class="example-item">
+      <img src="assets/moon_traffic_light_real.png" alt="Moon as traffic light">
+      <div class="caption">(a) Moon mistaken for traffic light</div>
+    </div>
+    <div class="example-item">
+      <img src="assets/traffic_light_truck_real.png" alt="Traffic lights on truck">
+      <div class="caption">(b) Traffic lights transported on truck</div>
+    </div>
+    <div class="example-item">
+      <img src="assets/stop_sign_billboard_real.png" alt="Stop sign on billboard">
+      <div class="caption">(c) Stop sign on billboard</div>
+    </div>
+    <div class="example-item">
+      <img src="assets/police_cars_real.png" alt="Police cars crossing">
+      <div class="caption">(d) Police cars crossing diagonally</div>
+    </div>
+  </div>
+
+  <h3>Four Semantic Layers</h3>
+  <p>SAVANT decomposes scene-level anomaly detection into four layers adapted from the 6-Layer Model for urban traffic description:</p>
+  <div class="card-grid">
+    <div class="stat-card">
+      <div class="number" style="font-size:1.3rem;">L1</div>
+      <div class="label"><strong>Street</strong><br>Topology, geometry, surface, lane markings</div>
+    </div>
+    <div class="stat-card">
+      <div class="number" style="font-size:1.3rem;">L2</div>
+      <div class="label"><strong>Infrastructure</strong><br>Lights, signs, cones, barriers, construction</div>
+    </div>
+    <div class="stat-card">
+      <div class="number" style="font-size:1.3rem;">L3</div>
+      <div class="label"><strong>Movable Objects</strong><br>Vehicles, pedestrians, dynamic entities</div>
+    </div>
+    <div class="stat-card">
+      <div class="number" style="font-size:1.3rem;">L4</div>
+      <div class="label"><strong>Environment</strong><br>Weather, visibility, lighting conditions</div>
+    </div>
+  </div>
+
+  <h3>Two-Phase Pipeline</h3>
+  <p><strong>Phase 1 &mdash; Structured Scene Description Extraction:</strong> Four parallel extraction signatures guide the VLM to systematically describe the scene according to each semantic layer, ensuring comprehensive coverage.</p>
+  <p><strong>Phase 2 &mdash; Multi-Modal Scene Evaluation:</strong> The VLM receives the original image alongside the structured descriptions for layer-wise anomaly assessment, cross-layer interaction analysis, and final binary classification.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- KEY RESULTS -->
+<!-- ============================================================ -->
+<section id="results">
+  <h2>Key Results</h2>
+  <div class="card-grid">
+    <div class="stat-card">
+      <div class="number">93.8%</div>
+      <div class="label">Accuracy<br>(Fine-tuned 7B)</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">90.8%</div>
+      <div class="label">Recall<br>(Fine-tuned 7B)</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">+18.5%</div>
+      <div class="label">Absolute Recall Improvement<br>over baselines</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">33</div>
+      <div class="label">VLMs<br>Evaluated</div>
+    </div>
+  </div>
+
+  <h3>Fine-Tuned vs. Baseline vs. Top Proprietary Models</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>Acc.</th>
+        <th>Rec.</th>
+        <th>Prec.</th>
+        <th>F1</th>
+        <th>T(s)</th>
+        <th>Queries</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Qwen2.5-VL-7B (NFT)</td>
+        <td>0.55</td>
+        <td>0.48</td>
+        <td>0.55</td>
+        <td>0.52</td>
+        <td>1.74</td>
+        <td>1</td>
+      </tr>
+      <tr style="background:#d4edda;">
+        <td><strong>Qwen2.5-VL-7B (FT)</strong></td>
+        <td><strong>0.94</strong></td>
+        <td><strong>0.91</strong></td>
+        <td><strong>0.97</strong></td>
+        <td><strong>0.94</strong></td>
+        <td><strong>0.08</strong></td>
+        <td><strong>1</strong></td>
+      </tr>
+      <tr>
+        <td>Qwen2.5-VL-7B (PFT)</td>
+        <td>0.84</td>
+        <td>0.82</td>
+        <td>0.85</td>
+        <td>0.83</td>
+        <td>13.85</td>
+        <td>2</td>
+      </tr>
+      <tr>
+        <td>Gemini-2.0-FE (full_opt)</td>
+        <td>0.88</td>
+        <td>0.90</td>
+        <td>0.86</td>
+        <td>0.88</td>
+        <td>17.8</td>
+        <td>5</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size:0.85rem;color:#888;">NFT = Non-Fine-Tuned, FT = Fine-Tuned Single-Shot, PFT = Pipeline Fine-Tuned. T = Inference time.</p>
+
+  <h3>Resolution Analysis</h3>
+  <div class="figure">
+    <img src="assets/resolution_comparison_grid.png" alt="Resolution comparison" style="max-width:700px;">
+    <div class="caption">Performance vs. resolution for top models per family. 360p represents the optimal balance between performance and efficiency.</div>
+  </div>
+
+  <h3>Layer-Specific Error Analysis</h3>
+  <div class="figure">
+    <img src="assets/failure_rates_heatmap_recreated.png" alt="Failure rates heatmap" style="max-width:600px;">
+    <div class="caption">Failure rates (%) across semantic layer combinations for three Qwen2.5-VL-7B variants. Layer abbreviations: S (Street), I (Infrastructure), M (Movable Objects), E (Environmental).</div>
+  </div>
+
+  <h3>Dataset Distribution</h3>
+  <div class="figure">
+    <img src="assets/dataset_distribution_recreated.png" alt="Dataset distribution" style="max-width:700px;">
+    <div class="caption">Layer-wise anomaly distribution comparing CODALM_medium dataset (5,078 samples) and its test split (1,020 samples).</div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SUPPLEMENTARY MATERIAL -->
+<!-- ============================================================ -->
+<section id="supplementary">
+  <h2><span class="supp-badge">SUPPLEMENTARY</span> Detailed Method Documentation</h2>
+  <p>The following sections present the complete architectures, prompts, and implementation details for all evaluation methods described in the paper. These could not be included in the main paper due to space constraints.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- METHOD ARCHITECTURES & PROMPTS -->
+<!-- ============================================================ -->
+<section id="methods">
+  <h2>Method Architectures &amp; Prompts</h2>
+  <p>Each DSPy Signature has a docstring, InputFields, and OutputFields. DSPy's ChatAdapter combines these into a structured prompt with a system message and a user message. Below we show the <strong>full assembled prompts</strong> for each method.</p>
+
+  <!-- Method 1: image_baseline -->
+  <details>
+    <summary><span class="method-tag">image_baseline</span> Single-shot Image Classification</summary>
+    <div class="details-content">
+      <p>Direct VLM prompting with image only, without structured reasoning or layered analysis. Uses <code>BasicAnomalyImageSignature</code> with <code>dspy.ChainOfThought</code>.</p>
+      <div class="arch-diagram">
+        <img src="assets/baselines_1.png" alt="image_baseline architecture">
+      </div>
+      <p class="code-label">System Message</p>
+<pre><code>Your input fields are:
+1. `scene_image` (Image): The base64 encoded image of the traffic scene from the front camera of the ego vehicle
+
+Your output fields are:
+1. `is_anomaly` (bool):
+        Determine if the scene is anomalous, i.e. an out-of-distribution or highly unusual event, considering:
+
+        1. Is this common to see while driving?
+        2. Does this have an effect on the ego vehicle?
+        3. Can this influence the ego vehicle's behavior?
+        4. Can the ego vehicle drive safely in this scenario?
+
+2. `explanation` (str): Explanation of why the scene is or is not anomalous
+
+All interactions will be structured in the following way, with the appropriate values filled in.
+
+[[ ## scene_image ## ]]
+{scene_image}
+
+[[ ## is_anomaly ## ]]
+{is_anomaly}        # note: the value you produce must be True or False
+
+[[ ## explanation ## ]]
+{explanation}
+
+[[ ## completed ## ]]
+
+In adhering to this structure, your objective is:
+        You are a fault monitor for a visual autonomous vehicle system.
+        Your task is to analyze the traffic scene and identify any anomalies that could affect vehicle safety, cause the vehicle to take unsafe actions or violate traffic rules.
+        Determine if the scene constitutes a normal observation or an anomaly and explain your reasoning.
+        Normal observations do not detrimentally affect the vehicle's performance, whereas anomalies might.
+
+        IMPORTANT: You must provide your response in the exact JSON format with ALL required fields:
+        {
+            "is_anomaly": true/false,
+            "explanation": "Final explanation of why the scene is or is not anomalous"
+        }</code></pre>
+      <p class="code-label">User Message</p>
+<pre><code>[[ ## scene_image ## ]]
+&lt;image&gt;
+
+Respond with the corresponding output fields, starting with the field `[[ ## is_anomaly ## ]]`
+(must be formatted as a valid Python bool), then `[[ ## explanation ## ]]`, and then ending
+with the marker for `[[ ## completed ## ]]`.</code></pre>
+    </div>
+  </details>
+
+  <!-- Method 2: text_baseline -->
+  <details>
+    <summary><span class="method-tag">text_baseline</span> Two-phase Text-only Classification</summary>
+    <div class="details-content">
+      <p>Two-phase approach without structured reasoning. Phase 1 extracts an unstructured scene description; Phase 2 classifies based on text only (no image in evaluation).</p>
+      <div class="arch-diagram">
+        <img src="assets/baselines_2(2).png" alt="text_baseline Phase 1" style="margin-bottom:0.5rem;">
+        <img src="assets/baselines_2.png" alt="text_baseline Phase 2">
+      </div>
+
+      <h4>Phase 1: Scene Description Extraction</h4>
+      <p>Uses <code>BasicSceneDescriptionSignature</code> with <code>dspy.ChainOfThought</code>.</p>
+      <p class="code-label">System Message</p>
+<pre><code>Your input fields are:
+1. `scene_image` (Image): The base64 encoded image of the traffic scene from the front camera of the ego vehicle
+
+Your output fields are:
+1. `scene_description` (str): A simple description of what is visible in the traffic scene
+
+All interactions will be structured in the following way, with the appropriate values filled in.
+
+[[ ## scene_image ## ]]
+{scene_image}
+
+[[ ## scene_description ## ]]
+{scene_description}
+
+[[ ## completed ## ]]
+
+In adhering to this structure, your objective is:
+        You are a traffic scene analysis expert for an autonomous vehicle system.
+        With over 10 years of experience in traffic scene analysis, you specialize in analyzing traffic scenes from the front camera of the ego vehicle.
+        Your task is to analyze the current traffic scene and provide a comprehensive analysis.
+
+        The goal is to capture all details that could affect the ego vehicle's driving behavior or safety.</code></pre>
+      <p class="code-label">User Message</p>
+<pre><code>[[ ## scene_image ## ]]
+&lt;image&gt;
+
+Respond with the corresponding output fields, starting with the field `[[ ## scene_description ## ]]`,
+and then ending with the marker for `[[ ## completed ## ]]`.</code></pre>
+
+      <h4>Phase 2: Anomaly Classification from Text</h4>
+      <p>Uses <code>BasicAnomalyTextSignature</code> with <code>dspy.ChainOfThought</code>. Receives only the text description (no image).</p>
+      <p class="code-label">System Message</p>
+<pre><code>Your input fields are:
+1. `scene_description` (str): The description of the traffic scene
+
+Your output fields are:
+1. `is_anomaly` (bool):
+        Determine if the scene is anomalous, i.e. an out-of-distribution or highly unusual event, considering:
+
+        1. Is this common to see while driving?
+        2. Does this have an effect on the ego vehicle?
+        3. Can this influence the ego vehicle's behavior?
+        4. Can the ego vehicle drive safely in this scenario?
+
+2. `explanation` (str): Explanation of why the scene is or is not anomalous
+
+All interactions will be structured in the following way, with the appropriate values filled in.
+
+[[ ## scene_description ## ]]
+{scene_description}
+
+[[ ## is_anomaly ## ]]
+{is_anomaly}        # note: the value you produce must be True or False
+
+[[ ## explanation ## ]]
+{explanation}
+
+[[ ## completed ## ]]
+
+In adhering to this structure, your objective is:
+        You are a fault monitor for a visual autonomous vehicle system.
+        Your task is to analyze the traffic scene and identify any anomalies that could affect vehicle safety, cause the vehicle to take unsafe actions or violate traffic rules.
+        Determine if the scene constitutes a normal observation or an anomaly and explain your reasoning.
+        Normal observations do not detrimentally affect the vehicle's performance, whereas anomalies might.</code></pre>
+      <p class="code-label">User Message</p>
+<pre><code>[[ ## scene_description ## ]]
+&lt;scene description text from Phase 1&gt;
+
+Respond with the corresponding output fields, starting with the field `[[ ## is_anomaly ## ]]`
+(must be formatted as a valid Python bool), then `[[ ## explanation ## ]]`, and then ending
+with the marker for `[[ ## completed ## ]]`.</code></pre>
+    </div>
+  </details>
+
+  <!-- Method 3: baseline -->
+  <details>
+    <summary><span class="method-tag">baseline</span> Two-phase Multimodal Classification</summary>
+    <div class="details-content">
+      <p>Two-phase approach without structured reasoning. Phase 1 extracts an unstructured scene description; Phase 2 performs multimodal classification using both image and text.</p>
+      <div class="arch-diagram">
+        <img src="assets/baselines_2(2).png" alt="baseline Phase 1" style="margin-bottom:0.5rem;">
+        <img src="assets/baselines_3.png" alt="baseline Phase 2">
+      </div>
+
+      <h4>Phase 1: Scene Description Extraction</h4>
+      <p>Same as <code>text_baseline</code> Phase 1 (see above).</p>
+
+      <h4>Phase 2: Anomaly Classification from Image + Text</h4>
+      <p>Uses <code>BasicAnomalySignature</code> with <code>dspy.ChainOfThought</code>. Receives both the scene description and the original image.</p>
+      <p class="code-label">System Message</p>
+<pre><code>Your input fields are:
+1. `scene_description` (str): The description of the traffic scene
+2. `scene_image` (Image): The base64 encoded image of the traffic scene from the front camera of the ego vehicle
+
+Your output fields are:
+1. `is_anomaly` (bool):
+        Determine if the scene is anomalous, i.e. an out-of-distribution or highly unusual event, considering:
+
+        1. Is this common to see while driving?
+        2. Does this have an effect on the ego vehicle?
+        3. Can this influence the ego vehicle's behavior?
+        4. Can the ego vehicle drive safely in this scenario?
+
+2. `explanation` (str): Explanation of why the scene is or is not anomalous
+
+All interactions will be structured in the following way, with the appropriate values filled in.
+
+[[ ## scene_description ## ]]
+{scene_description}
+
+[[ ## scene_image ## ]]
+{scene_image}
+
+[[ ## is_anomaly ## ]]
+{is_anomaly}        # note: the value you produce must be True or False
+
+[[ ## explanation ## ]]
+{explanation}
+
+[[ ## completed ## ]]
+
+In adhering to this structure, your objective is:
+        You are a fault monitor for a visual autonomous vehicle system.
+        Your task is to analyze the traffic scene and identify any anomalies that could affect vehicle safety, cause the vehicle to take unsafe actions or violate traffic rules.
+        Determine if the scene constitutes a normal observation or an anomaly and explain your reasoning.
+        Normal observations do not detrimentally affect the vehicle's performance, whereas anomalies might.</code></pre>
+      <p class="code-label">User Message</p>
+<pre><code>[[ ## scene_description ## ]]
+&lt;scene description text from Phase 1&gt;
+
+[[ ## scene_image ## ]]
+&lt;image&gt;
+
+Respond with the corresponding output fields, starting with the field `[[ ## is_anomaly ## ]]`
+(must be formatted as a valid Python bool), then `[[ ## explanation ## ]]`, and then ending
+with the marker for `[[ ## completed ## ]]`.</code></pre>
+    </div>
+  </details>
+
+  <!-- Method 4: image -->
+  <details>
+    <summary><span class="method-tag">image</span> Single-shot Layered Image Classification</summary>
+    <div class="details-content">
+      <p>Single-query approach using structured layered prompting. The VLM analyzes the image using the four-layer decomposition. Uses <code>SceneAnomalyImageSignature</code> with <code>dspy.ChainOfThought</code>.</p>
+      <div class="arch-diagram">
+        <img src="assets/image.PNG" alt="image method architecture">
+      </div>
+      <p class="code-label">System Message</p>
+<pre><code>Your input fields are:
+1. `scene_image` (Image): The base64 encoded image of the traffic scene from the front camera of the ego vehicle
+
+Your output fields are:
+1. `street_layer_analysis` (str): Analysis of street-level anomalies (topology, geometry, surface, lane markings). Describe if there are any unusual or dangerous road conditions
+2. `street_layer_anomaly` (bool)
+3. `infrastructure_layer_analysis` (str): Analysis of infrastructure anomalies (traffic lights, signs, cones, barriers, construction). Describe any unusual or problematic infrastructure elements
+4. `infrastructure_layer_anomaly` (bool)
+5. `movable_objects_layer_analysis` (str): Analysis of movable object anomalies (vehicles, pedestrians, etc.). Describe if there any unusual behaviors or dangerous situations.
+6. `movable_objects_layer_anomaly` (bool)
+7. `environmental_layer_analysis` (str): Analysis of environmental anomalies (weather, visibility). Describe if conditions are truly out-of-distribution or simply require caution.
+8. `environmental_layer_anomaly` (bool)
+9. `is_anomaly` (bool): Determine if the scene is anomalous, i.e. an out-of-distribution or highly unusual event, considering:
+        1. Individual layer anomalies
+        2. Cross-layer interaction effects
+        3. Context-specific requirements from semantic layer
+        4. Criticality of the scene
+
+        Finally, provide an overall assessment considering:
+        1. Is this common to see while driving?
+        2. Does this have an effect on the ego vehicle?
+        3. Can this influence the ego vehicle's behavior?
+        4. Can the ego vehicle drive safely in this scenario?
+10. `explanation` (str): Final explanation considering all layers and their interactions
+
+All interactions will be structured in the following way, with the appropriate values filled in.
+
+[[ ## scene_image ## ]]
+{scene_image}
+
+[[ ## street_layer_analysis ## ]]
+{street_layer_analysis}
+
+[[ ## street_layer_anomaly ## ]]
+{street_layer_anomaly}        # note: the value you produce must be True or False
+
+[[ ## infrastructure_layer_analysis ## ]]
+{infrastructure_layer_analysis}
+
+[[ ## infrastructure_layer_anomaly ## ]]
+{infrastructure_layer_anomaly}        # note: the value you produce must be True or False
+
+[[ ## movable_objects_layer_analysis ## ]]
+{movable_objects_layer_analysis}
+
+[[ ## movable_objects_layer_anomaly ## ]]
+{movable_objects_layer_anomaly}        # note: the value you produce must be True or False
+
+[[ ## environmental_layer_analysis ## ]]
+{environmental_layer_analysis}
+
+[[ ## environmental_layer_anomaly ## ]]
+{environmental_layer_anomaly}        # note: the value you produce must be True or False
+
+[[ ## is_anomaly ## ]]
+{is_anomaly}        # note: the value you produce must be True or False
+
+[[ ## explanation ## ]]
+{explanation}
+
+[[ ## completed ## ]]
+
+In adhering to this structure, your objective is:
+        You are a fault monitor for a visual autonomous vehicle system.
+        Your task is to analyze the traffic scene layer by layer and identify any anomalies that could affect vehicle safety, cause the vehicle to take unsafe actions or violate traffic rules.
+        For each layer, determine if constitutes a normal observation or an anomaly and explain your reasoning.
+        Normal observations do not detrimentally affect the vehicle's performance, whereas anomalies might.
+
+        Finally, provide an overall assessment.</code></pre>
+      <p class="code-label">User Message</p>
+<pre><code>[[ ## scene_image ## ]]
+&lt;image&gt;
+
+Respond with the corresponding output fields, starting with the field `[[ ## street_layer_analysis ## ]]`,
+then `[[ ## street_layer_anomaly ## ]]` (must be formatted as a valid Python bool),
+then `[[ ## infrastructure_layer_analysis ## ]]`,
+then `[[ ## infrastructure_layer_anomaly ## ]]` (must be formatted as a valid Python bool),
+then `[[ ## movable_objects_layer_analysis ## ]]`,
+then `[[ ## movable_objects_layer_anomaly ## ]]` (must be formatted as a valid Python bool),
+then `[[ ## environmental_layer_analysis ## ]]`,
+then `[[ ## environmental_layer_anomaly ## ]]` (must be formatted as a valid Python bool),
+then `[[ ## is_anomaly ## ]]` (must be formatted as a valid Python bool),
+then `[[ ## explanation ## ]]`, and then ending with the marker for `[[ ## completed ## ]]`.</code></pre>
+    </div>
+  </details>
+
+  <!-- Method 5: text -->
+  <details>
+    <summary><span class="method-tag">text</span> Two-phase Layered Text-only Classification</summary>
+    <div class="details-content">
+      <p>Two-phase approach with structured layered analysis. Phase 1 extracts a structured scene description using four parallel layer-specific signatures; Phase 2 performs text-only classification.</p>
+      <div class="arch-diagram">
+        <img src="assets/full_text.PNG" alt="text method architecture">
+      </div>
+
+      <h4>Phase 1: Layered Scene Description Extraction</h4>
+      <p>Four parallel extraction signatures (one per semantic layer). See <a href="#extraction">Extraction Prompts</a> for complete prompts.</p>
+
+      <h4>Phase 2: Anomaly Classification from Layered Text</h4>
+      <p>Uses <code>SceneAnomalyTextSignature</code> with <code>dspy.ChainOfThought</code>. Receives only the structured text description (no image).</p>
+      <p class="code-label">System Message</p>
+<pre><code>Your input fields are:
+1. `scene_description` (str): Structured description of the scene
+
+Your output fields are:
+1. `street_layer_analysis` (str): Analysis of street-level anomalies (topology, geometry, surface, lane markings). Describe if there are any unusual or dangerous road conditions
+2. `street_layer_anomaly` (bool)
+3. `infrastructure_layer_analysis` (str): Analysis of infrastructure anomalies (traffic lights, signs, cones, barriers, construction). Describe any unusual or problematic infrastructure elements
+4. `infrastructure_layer_anomaly` (bool)
+5. `movable_objects_layer_analysis` (str): Analysis of movable object anomalies (vehicles, pedestrians, etc.). Describe if there any unusual behaviors or dangerous situations.
+6. `movable_objects_layer_anomaly` (bool)
+7. `environmental_layer_analysis` (str): Analysis of environmental anomalies (weather, visibility). Describe if conditions are truly out-of-distribution or simply require caution.
+8. `environmental_layer_anomaly` (bool)
+9. `is_anomaly` (bool): Determine if the scene is anomalous, i.e. an out-of-distribution or highly unusual event, considering:
+        1. Individual layer anomalies
+        2. Cross-layer interaction effects
+        3. Context-specific requirements from semantic layer
+        4. Criticality of the scene
+
+        Finally, provide an overall assessment considering:
+        1. Is this common to see while driving?
+        2. Does this have an effect on the ego vehicle?
+        3. Can this influence the ego vehicle's behavior?
+        4. Can the ego vehicle drive safely in this scenario?
+10. `explanation` (str): Final explanation considering all layers and their interactions
+
+All interactions will be structured in the following way, with the appropriate values filled in.
+
+[[ ## scene_description ## ]]
+{scene_description}
+
+[[ ## street_layer_analysis ## ]]
+{street_layer_analysis}
+
+[[ ## street_layer_anomaly ## ]]
+{street_layer_anomaly}        # note: the value you produce must be True or False
+
+[[ ## infrastructure_layer_analysis ## ]]
+{infrastructure_layer_analysis}
+
+[[ ## infrastructure_layer_anomaly ## ]]
+{infrastructure_layer_anomaly}        # note: the value you produce must be True or False
+
+[[ ## movable_objects_layer_analysis ## ]]
+{movable_objects_layer_analysis}
+
+[[ ## movable_objects_layer_anomaly ## ]]
+{movable_objects_layer_anomaly}        # note: the value you produce must be True or False
+
+[[ ## environmental_layer_analysis ## ]]
+{environmental_layer_analysis}
+
+[[ ## environmental_layer_anomaly ## ]]
+{environmental_layer_anomaly}        # note: the value you produce must be True or False
+
+[[ ## is_anomaly ## ]]
+{is_anomaly}        # note: the value you produce must be True or False
+
+[[ ## explanation ## ]]
+{explanation}
+
+[[ ## completed ## ]]
+
+In adhering to this structure, your objective is:
+        You are a fault monitor for a visual autonomous vehicle system.
+        Your task is to analyze the traffic scene layer by layer and identify any anomalies that could affect vehicle safety, cause the vehicle to take unsafe actions or violate traffic rules.
+        For each layer, determine if constitutes a normal observation or an anomaly and explain your reasoning.
+        Normal observtions do not detrimentally affect the vehicle's performance, whereas anomalies might.
+
+        Finally, provide an overall assessment.</code></pre>
+      <p class="code-label">User Message</p>
+<pre><code>[[ ## scene_description ## ]]
+&lt;structured scene description from extraction step&gt;
+
+Respond with the corresponding output fields, starting with the field `[[ ## street_layer_analysis ## ]]`,
+then `[[ ## street_layer_anomaly ## ]]` (must be formatted as a valid Python bool),
+then `[[ ## infrastructure_layer_analysis ## ]]`,
+then `[[ ## infrastructure_layer_anomaly ## ]]` (must be formatted as a valid Python bool),
+then `[[ ## movable_objects_layer_analysis ## ]]`,
+then `[[ ## movable_objects_layer_anomaly ## ]]` (must be formatted as a valid Python bool),
+then `[[ ## environmental_layer_analysis ## ]]`,
+then `[[ ## environmental_layer_anomaly ## ]]` (must be formatted as a valid Python bool),
+then `[[ ## is_anomaly ## ]]` (must be formatted as a valid Python bool),
+then `[[ ## explanation ## ]]`, and then ending with the marker for `[[ ## completed ## ]]`.</code></pre>
+    </div>
+  </details>
+
+  <!-- Method 6: full -->
+  <details>
+    <summary><span class="method-tag">full</span> Two-phase Layered Multimodal Classification (SAVANT)</summary>
+    <div class="details-content">
+      <p>Complete SAVANT pipeline with multimodal structured evaluation. Phase 1 extracts structured scene descriptions; Phase 2 performs classification using both image and layered text. Uses <code>SceneAnomalySignature</code> with <code>dspy.ChainOfThought</code>.</p>
+      <div class="arch-diagram">
+        <img src="assets/Full.PNG" alt="full method architecture">
+      </div>
+
+      <h4>Phase 1: Layered Scene Description Extraction</h4>
+      <p>Four parallel extraction signatures (one per semantic layer). See <a href="#extraction">Extraction Prompts</a> for complete prompts.</p>
+
+      <h4>Phase 2: Anomaly Classification from Image + Layered Text</h4>
+      <p class="code-label">System Message</p>
+<pre><code>Your input fields are:
+1. `scene_image` (Image): The base64 encoded image of the traffic scene from the front camera of the ego vehicle
+2. `scene_description` (str): Structured description of the scene
+
+Your output fields are:
+1. `street_layer_analysis` (str): Analysis of street-level anomalies (topology, geometry, surface, lane markings). Describe if there are any unusual or dangerous road conditions
+2. `street_layer_anomaly` (bool)
+3. `infrastructure_layer_analysis` (str): Analysis of infrastructure anomalies (traffic lights, signs, cones, barriers, construction). Describe any unusual or problematic infrastructure elements
+4. `infrastructure_layer_anomaly` (bool)
+5. `movable_objects_layer_analysis` (str): Analysis of movable object anomalies (vehicles, pedestrians, etc.). Describe if there any unusual behaviors or dangerous situations.
+6. `movable_objects_layer_anomaly` (bool)
+7. `environmental_layer_analysis` (str): Analysis of environmental anomalies (weather, visibility). Describe if conditions are truly out-of-distribution or simply require caution.
+8. `environmental_layer_anomaly` (bool)
+9. `is_anomaly` (bool): Determine if the scene is anomalous, i.e. an out-of-distribution or highly unusual event, considering:
+        1. Individual layer anomalies
+        2. Cross-layer interaction effects
+        3. Context-specific requirements from semantic layer
+        4. Criticality of the scene
+
+        Finally, provide an overall assessment considering:
+        1. Is this common to see while driving?
+        2. Does this have an effect on the ego vehicle?
+        3. Can this influence the ego vehicle's behavior?
+        4. Can the ego vehicle drive safely in this scenario?
+10. `explanation` (str): Final explanation considering all layers and their interactions
+
+All interactions will be structured in the following way, with the appropriate values filled in.
+
+[[ ## scene_image ## ]]
+{scene_image}
+
+[[ ## scene_description ## ]]
+{scene_description}
+
+[[ ## street_layer_analysis ## ]]
+{street_layer_analysis}
+
+[[ ## street_layer_anomaly ## ]]
+{street_layer_anomaly}        # note: the value you produce must be True or False
+
+[[ ## infrastructure_layer_analysis ## ]]
+{infrastructure_layer_analysis}
+
+[[ ## infrastructure_layer_anomaly ## ]]
+{infrastructure_layer_anomaly}        # note: the value you produce must be True or False
+
+[[ ## movable_objects_layer_analysis ## ]]
+{movable_objects_layer_analysis}
+
+[[ ## movable_objects_layer_anomaly ## ]]
+{movable_objects_layer_anomaly}        # note: the value you produce must be True or False
+
+[[ ## environmental_layer_analysis ## ]]
+{environmental_layer_analysis}
+
+[[ ## environmental_layer_anomaly ## ]]
+{environmental_layer_anomaly}        # note: the value you produce must be True or False
+
+[[ ## is_anomaly ## ]]
+{is_anomaly}        # note: the value you produce must be True or False
+
+[[ ## explanation ## ]]
+{explanation}
+
+[[ ## completed ## ]]
+
+In adhering to this structure, your objective is:
+        You are a fault monitor for a visual autonomous vehicle system.
+        Your task is to analyze the traffic scene layer by layer and identify any anomalies that could affect vehicle safety, cause the vehicle to take unsafe actions or violate traffic rules.
+        For each layer, determine if constitutes a normal observation or an anomaly and explain your reasoning.
+        Normal observtions do not detrimentally affect the vehicle's performance, whereas anomalies might.
+
+        Finally, provide an overall assessment.</code></pre>
+      <p class="code-label">User Message</p>
+<pre><code>[[ ## scene_image ## ]]
+&lt;image&gt;
+
+[[ ## scene_description ## ]]
+&lt;structured scene description from extraction step&gt;
+
+Respond with the corresponding output fields, starting with the field `[[ ## street_layer_analysis ## ]]`,
+then `[[ ## street_layer_anomaly ## ]]` (must be formatted as a valid Python bool),
+then `[[ ## infrastructure_layer_analysis ## ]]`,
+then `[[ ## infrastructure_layer_anomaly ## ]]` (must be formatted as a valid Python bool),
+then `[[ ## movable_objects_layer_analysis ## ]]`,
+then `[[ ## movable_objects_layer_anomaly ## ]]` (must be formatted as a valid Python bool),
+then `[[ ## environmental_layer_analysis ## ]]`,
+then `[[ ## environmental_layer_anomaly ## ]]` (must be formatted as a valid Python bool),
+then `[[ ## is_anomaly ## ]]` (must be formatted as a valid Python bool),
+then `[[ ## explanation ## ]]`, and then ending with the marker for `[[ ## completed ## ]]`.</code></pre>
+    </div>
+  </details>
+
+  <!-- Method 7: *_opt -->
+  <details>
+    <summary><span class="method-tag">*_opt</span> MIPROv2 Optimized Variants</summary>
+    <div class="details-content">
+      <p>Optimized versions of <code>text</code> and <code>full</code> using DSPy MIPROv2 prompt optimization. The optimizer modifies the Phase 2 evaluation prompts in two ways: (1) rewritten instructions tailored to each model, and (2) few-shot demonstrations selected from training data. Only Phase 2 (evaluation) is optimized; the extraction phase uses the same base prompts.</p>
+
+      <p><strong>Optimization setup:</strong> <code>dspy.MIPROv2</code> with <code>num_candidates=15</code>, <code>init_temperature=0.3</code>, <code>num_trials=25</code>, <code>minibatch_size=8</code>, <code>max_bootstrapped_demos=5</code>, <code>max_labeled_demos=6</code>. Training data: ~103 anomalous + 21 normal scenes. Metric: binary classification accuracy.</p>
+
+      <h4>Summary of Optimized Prompts Across Models</h4>
+      <table>
+        <thead>
+          <tr><th>Model</th><th>Optimizer</th><th>Instruction Changes</th><th>Demos</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Qwen2.5-VL-7B</td><td>text</td><td>Minimal (minor rewording)</td><td>6</td></tr>
+          <tr><td>Qwen2.5-VL-7B</td><td>image/full</td><td>Added per-layer bullet points</td><td>6</td></tr>
+          <tr><td>Qwen2.5-VL-3B</td><td>text</td><td>Unchanged</td><td>0</td></tr>
+          <tr><td>Qwen2.5-VL-3B</td><td>image/full</td><td>Unchanged</td><td>0</td></tr>
+          <tr><td>Qwen2.5-VL-32B</td><td>text</td><td>Unchanged</td><td>6</td></tr>
+          <tr><td>Qwen2.5-VL-32B</td><td>image/full</td><td>Unchanged</td><td>0</td></tr>
+          <tr><td>Qwen2.5-VL-72B</td><td>text</td><td>Completely rewritten ("guardian angel")</td><td>6</td></tr>
+          <tr><td>Qwen2.5-VL-72B</td><td>image/full</td><td>Unchanged</td><td>0</td></tr>
+          <tr><td>Gemini-2.0-FE</td><td>text</td><td>Completely rewritten ("vigilant fault monitor")</td><td>4</td></tr>
+          <tr><td>Gemini-2.0-FE</td><td>image/full</td><td>Completely rewritten ("sophisticated fault monitor")</td><td>4</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Example: Gemini-2.0-Flash-Exp &mdash; Text Optimizer (Rewritten by MIPROv2)</h4>
+<pre><code>You are tasked with serving as a vigilant fault monitor for a sophisticated autonomous vehicle
+system. Your core responsibility involves meticulously analyzing a traffic scene, dissecting it
+into distinct layers -- street, infrastructure, movable objects, and environmental -- to pinpoint any
+potential anomalies that could jeopardize vehicle safety, induce unsafe maneuvers, or lead to
+violations of traffic regulations.
+
+Each layer demands a thorough scrutiny:
+
+1. **Street Layer**: Assess the road's geometry, topology, surface condition, and lane markings.
+   Consider whether the layout, including any merging lanes, splits, or bottlenecks, presents
+   challenges. Evaluate the road surface's integrity and the clarity of lane markings, factoring
+   in any disruptions caused by construction or wear.
+
+2. **Infrastructure Layer**: Investigate traffic control devices such as lights, signs, cones,
+   and barriers. Determine if their placement and condition adhere to standards, ensuring they
+   effectively guide traffic. Take note of any construction sites, evaluating their legitimacy
+   and the adequacy of their demarcation.
+
+3. **Movable Objects Layer**: Observe vehicles, pedestrians, and other dynamic entities within
+   the scene. Analyze their behavior and positioning relative to the ego vehicle, identifying
+   any unusual movements or placements that could signal danger.
+
+4. **Environmental Layer**: Gauge the impact of weather conditions, visibility, and lighting
+   on the driving environment. Consider how these factors may affect the vehicle's perception
+   and maneuverability.
+
+For each layer, discern whether the observations constitute a normal scenario conducive to safe
+driving or an anomaly that could compromise safety. Provide a reasoned explanation for your
+determination, elucidating the specific elements that support your conclusion.
+
+Ultimately, synthesize your findings into an overarching assessment. Reflect on the interplay
+between the layers, considering how anomalies in one area might exacerbate issues in another.
+Evaluate the scene's commonality, its implications for the ego vehicle's performance, and the
+necessity for altering the vehicle's behavior. Conclude with a definitive statement on the
+scene's overall safety and the vehicle's ability to navigate it securely.</code></pre>
+
+      <h4>Example: Gemini-2.0-Flash-Exp &mdash; Full Optimizer (Rewritten by MIPROv2)</h4>
+<pre><code>You are a sophisticated fault monitor for a visual autonomous vehicle system, tasked with
+meticulously analyzing traffic scenes to ensure the safety and optimal performance of the vehicle.
+Your role is to dissect the scene into four distinct layers -- street, infrastructure, movable objects,
+and environmental -- and conduct a thorough examination for any anomalies that could jeopardize vehicle
+safety, lead to unsafe actions, or result in traffic rule violations.
+
+For each layer, your analysis should be comprehensive and detailed:
+- **Street Layer:** Assess the road's geometry, topology, surface condition, and lane markings.
+  Determine if there are any unusual road conditions, such as unexpected lane closures, irregular
+  surface textures, or unclear markings that could confuse the vehicle.
+- **Infrastructure Layer:** Evaluate the state of traffic lights, signs, cones, barriers, and
+  construction sites. Identify any infrastructure elements that are out of place, damaged, or
+  improperly set up, which could mislead the vehicle or create hazardous situations.
+- **Movable Objects Layer:** Analyze the behavior and positioning of vehicles, pedestrians, and
+  other dynamic elements. Look for any unusual movements, unexpected stops, or erratic actions
+  that could pose a threat to the vehicle's safety.
+- **Environmental Layer:** Consider the weather, visibility, and lighting conditions. Determine
+  if the environmental factors are within normal ranges or if they present challenges that could
+  affect the vehicle's performance, such as reduced visibility due to fog or glare from streetlights.
+
+For each layer, clearly state whether the observations are normal or anomalous, and provide a
+detailed explanation for your reasoning. Normal observations should not negatively impact the
+vehicle's performance, while anomalies could potentially cause issues.
+
+After analyzing each layer, synthesize your findings into an overall assessment. Consider the
+interactions between layers, the context-specific requirements of the scene, and the criticality
+of the observed conditions. Provide a final explanation that summarizes the safety and potential
+impact on the vehicle's behavior, addressing the following questions:
+1. Is this a common occurrence while driving?
+2. Does this have an effect on the ego vehicle?
+3. Can this influence the ego vehicle's behavior?
+4. Can the ego vehicle drive safely in this scenario?
+
+Your analysis should be highly informative and descriptive, ensuring that all potential hazards
+are identified and explained in detail.</code></pre>
+
+      <h4>Example: Qwen2.5-VL-72B &mdash; Text Optimizer (Rewritten by MIPROv2)</h4>
+<pre><code>You are the guardian angel of an autonomous vehicle navigating through complex and ever-changing
+traffic scenes. Your mission is to meticulously dissect each scene into its fundamental
+components -- street, infrastructure, movable objects, and environmental factors -- and scrutinize them
+for any deviations from the norm that could jeopardize the vehicle's safety, operational integrity,
+or adherence to traffic laws.
+
+**Your Role:**
+- **Layered Detective:** Delve deep into the intricacies of each scene layer. For the street layer,
+  investigate the road's geometry, topology, surface condition, and lane markings. In the
+  infrastructure layer, examine traffic lights, signs, cones, barriers, and construction sites.
+  Assess the behavior of vehicles, pedestrians, and other dynamic entities in the movable objects
+  layer. Lastly, consider the environmental factors like weather, visibility, and lighting
+  conditions in the environmental layer.
+
+- **Anomaly Hunter:** Identify and flag any anomalies within each layer. Determine if what you
+  observe is a normal occurrence or a potential hazard. Provide a rationale for your judgment,
+  explaining why certain observations are deemed anomalies and how they could impact the vehicle's
+  performance.
+
+- **Synthesizer of Truth:** After analyzing each layer, synthesize your findings to deliver an
+  overarching verdict on the scene's anomaly status. Consider the interplay between layers, the
+  broader context, and the criticality of the situation. Offer a conclusive explanation that
+  encapsulates your reasoning, guiding the autonomous vehicle towards safe and informed
+  decision-making.
+
+**Your Task:**
+Given a structured description of a traffic scene, conduct a thorough analysis of each layer,
+pinpoint anomalies, and provide a comprehensive assessment. Your insights will empower the vehicle
+to navigate the world with precision and safety.</code></pre>
+    </div>
+  </details>
+
+  <!-- Method Comparison Summary -->
+  <h3>Method Comparison Summary</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>Layered Analysis</th>
+        <th>Image in Phase 2</th>
+        <th>DSPy Opt.</th>
+        <th>Queries</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><code>image_baseline</code></td><td>No</td><td>Yes (single)</td><td>No</td><td>1</td></tr>
+      <tr><td><code>text_baseline</code></td><td>No</td><td>No</td><td>No</td><td>2</td></tr>
+      <tr><td><code>baseline</code></td><td>No</td><td>Yes</td><td>No</td><td>2</td></tr>
+      <tr><td><code>image</code></td><td>Yes</td><td>Yes (single)</td><td>No</td><td>1</td></tr>
+      <tr><td><code>text</code></td><td>Yes</td><td>No</td><td>No</td><td>5</td></tr>
+      <tr><td><code>full</code></td><td>Yes</td><td>Yes</td><td>No</td><td>5</td></tr>
+      <tr><td><code>text_opt</code></td><td>Yes</td><td>No</td><td>Yes</td><td>5</td></tr>
+      <tr><td><code>full_opt</code></td><td>Yes</td><td>Yes</td><td>Yes</td><td>5</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================================================ -->
+<!-- LAYERED EXTRACTION PROMPTS -->
+<!-- ============================================================ -->
+<section id="extraction">
+  <h2>Layered Scene Description Extraction Prompts</h2>
+  <p>The <code>text</code> and <code>full</code> methods use four parallel extraction signatures in Phase 1, one per semantic layer. Each signature extracts structured information from the image.</p>
+
+  <details>
+    <summary>Layer 1: Street Layer &mdash; <code>StreetLayerSignature</code></summary>
+    <div class="details-content">
+      <p>Extracts topology, geometry, surface condition, and lane markings. Uses <code>StreetLayerAnalyzer</code> with <code>dspy.ChainOfThought</code>.</p>
+      <p class="code-label">System Message</p>
+<pre><code>Your input fields are:
+1. `scene_image` (Image): The base64 encoded image of the traffic scene from the front camera of the ego vehicle
+
+Your output fields are:
+1. `topology` (str): Describe the street network layout or structure.
+                                      For example: road type (highway, urban, residential), intersections (T-junction, roundabout),
+                                      number of carriageways, connections (intersections, merges, splits), etc.
+2. `geometry` (str): Describe The geometry of the road, including number of lanes, lane types
+                                     (driving, turning, bus, bike etc.), lane widths, road curvature (straight, curved, intersection, etc.),
+                                     road gradient (flat, uphill, downhill, etc.), and any geometric features like merging lanes, splits,
+                                     or bottlenecks
+3. `surface` (str): The road surface characteristics including material type (asphalt, concrete, gravel, etc.),
+                                    surface condition (dry, wet, icy, snowy etc.), surface quality (smooth, rough, damaged etc.), and any
+                                    hazards or anomalies (potholes, cracks, debris, speed bumps, etc.)
+4. `lane_markings` (str): The characteristics and condition of lane markings, including marking types
+                                          (solid, dashed, double, yellow, white), marking visibility (clear, faded, obscured), special markings
+                                          (arrows, crosswalks, stop lines), and any irregularities or temporary markings
+
+All interactions will be structured in the following way, with the appropriate values filled in.
+
+[[ ## scene_image ## ]]
+{scene_image}
+
+[[ ## topology ## ]]
+{topology}
+
+[[ ## geometry ## ]]
+{geometry}
+
+[[ ## surface ## ]]
+{surface}
+
+[[ ## lane_markings ## ]]
+{lane_markings}
+
+[[ ## completed ## ]]
+
+In adhering to this structure, your objective is:
+        You are a traffic scene analysis expert for an autonomous vehicle system.
+        With over 10 years of experience in traffic scene analysis, you specialize in analyzing traffic scenes from the front camera of the ego vehicle.
+        Your task is to analyze the current traffic scene strictly based on the street level and provide a comprehensive analysis.
+
+        The street level analysis includes:
+        - Topology: Overall street network structure (e.g., road type, intersections)
+        - Geometry: Road geometry details (e.g., lane count, curvature, gradient)
+        - Surface: Road surface material, condition and potential hazards
+        - Lane markings: Quality and visibility of lane markings, including any irregularities
+
+        The goal is to capture all street-related details that could affect the ego vehicle's driving behavior or safety.</code></pre>
+      <p class="code-label">User Message</p>
+<pre><code>[[ ## scene_image ## ]]
+&lt;image&gt;
+
+Respond with the corresponding output fields, starting with the field `[[ ## topology ## ]]`,
+then `[[ ## geometry ## ]]`, then `[[ ## surface ## ]]`, then `[[ ## lane_markings ## ]]`,
+and then ending with the marker for `[[ ## completed ## ]]`.</code></pre>
+    </div>
+  </details>
+
+  <details>
+    <summary>Layer 2: Infrastructure Layer &mdash; <code>InfrastructureLayerSignature</code></summary>
+    <div class="details-content">
+      <p>Extracts traffic lights, signs, cones, barriers, and construction sites. Uses <code>InfrastructureLayerAnalyzer</code> with <code>dspy.ChainOfThought</code>.</p>
+      <p class="code-label">System Message</p>
+<pre><code>Your input fields are:
+1. `scene_image` (Image): The base64 encoded image of the traffic scene from the front camera of the ego vehicle
+
+Your output fields are:
+1. `traffic_lights` (str): Describe any traffic lights or objects mistaken for traffic lights.
+                                           Include position, state (green, red, flashing) and whether they seem correctly placed or attached to
+                                           unusual objects. Return 'None' if no traffic lights are present.
+2. `traffic_signs` (str): Describe any traffic signs or potential lookalikes (e.g., signs on billboards, defaced or
+                                          damaged signs). Include sign type, visibility, placement, and note if they appear
+                                          normal or if anything seems odd. Return 'None' if no traffic signs are present.
+3. `traffic_cones` (str): Describe traffic cones, including their quantity, positions (e.g., placed on lane markings, soulders),
+                                          and any unusual cases (e.g., objects that look like cones but aren't). Indicate if placement is typical
+                                          (construction zone) or out of place. Return 'None' if no traffic cones are present.
+4. `traffic_barriers` (str): Describe any traffic barriers, noting their position, condition and whether they appear damaged,
+                                            misplaced, or used in unexpected ways. Return 'None' if no traffic barriers are present.
+5. `construction_sites` (str): Describe any construction or maintenance areas, including signs of ongoing work, equipment,
+                                               or partial road closures. Note if items appear legitimate or incorrectly placed
+                                               (e.g., unmarked hazards, open pits). Return 'None' if no construction sites are present.
+
+All interactions will be structured in the following way, with the appropriate values filled in.
+
+[[ ## scene_image ## ]]
+{scene_image}
+
+[[ ## traffic_lights ## ]]
+{traffic_lights}
+
+[[ ## traffic_signs ## ]]
+{traffic_signs}
+
+[[ ## traffic_cones ## ]]
+{traffic_cones}
+
+[[ ## traffic_barriers ## ]]
+{traffic_barriers}
+
+[[ ## construction_sites ## ]]
+{construction_sites}
+
+[[ ## completed ## ]]
+
+In adhering to this structure, your objective is:
+        You are a traffic scene analysis expert for an autonomous vehicle system.
+        With over 10 years of experience in traffic scene analysis, you specialize in analyzing traffic scenes from the front camera of the ego vehicle.
+        Your task is to analyze the current traffic scene strictly based on the infrastructure level and provide a comprehensive analysis.
+
+        The infrastructure level analysis includes:
+        - Traffic lights
+        - Traffic signs
+        - Traffic cones
+        - Traffic barriers
+        - Construction sites
+
+        Focus on:
+        - Normal infrastructure (traffic lights, traffic signs, cones, barriers, construction areas)
+        - Incorrect or unusual placements and positioning (e.g., traffic signs on billboards, traffic lights carried by vehicles)
+        - Damaged or defaced infrastructure (graffiti on signs, bent or obscured signs)
+        - Objects that might be misinterpreted as infrastructure (e.g., balloons mistaken for traffic cones, moon for traffic lights)
+
+        Note their presence, placement, and condition -- especially if something seems out-of-place or anomalous.
+        If something is unclear or partially visible, indicate that.
+        The goal is to capture all infrastructure-related details that could affect the ego vehicle's driving behavior or safety.</code></pre>
+      <p class="code-label">User Message</p>
+<pre><code>[[ ## scene_image ## ]]
+&lt;image&gt;
+
+Respond with the corresponding output fields, starting with the field `[[ ## traffic_lights ## ]]`,
+then `[[ ## traffic_signs ## ]]`, then `[[ ## traffic_cones ## ]]`, then `[[ ## traffic_barriers ## ]]`,
+then `[[ ## construction_sites ## ]]`, and then ending with the marker for `[[ ## completed ## ]]`.</code></pre>
+    </div>
+  </details>
+
+  <details>
+    <summary>Layer 3: Movable Objects Layer &mdash; <code>MovableObjectsLayerSignature</code></summary>
+    <div class="details-content">
+      <p>Extracts vehicles, pedestrians, and other dynamic objects. Uses <code>MovableObjectsLayerAnalyzer</code> with <code>dspy.ChainOfThought</code>.</p>
+      <p class="code-label">System Message</p>
+<pre><code>Your input fields are:
+1. `scene_image` (Image): The base64 encoded image of the traffic scene from the front camera of the ego vehicle
+
+Your output fields are:
+1. `vehicles` (str): Describe each visible vehicle (car, truck, bus, motorcycle, bicycle, scooter etc.)
+                                     its approximate position and orientation to the ego vehicle and any unusual features, anomalies or
+                                     out-of-place behavior. Return 'None' if no vehicles are present.
+2. `pedestrians` (str): Describe any visible pedestrians, including their position relative to the ego vehicle
+                                    and any odd or risky behavior. Return 'None' if no pedestrians are present.
+3. `others` (str): Describe any other dynamic, moving or potentially moving objects (animals, scooters,
+                                   unusual objects, etc.) and any anomalous or out-of-place behavior of such objects in the scene.
+                                   Return 'None' if no other objects are present.
+
+All interactions will be structured in the following way, with the appropriate values filled in.
+
+[[ ## scene_image ## ]]
+{scene_image}
+
+[[ ## vehicles ## ]]
+{vehicles}
+
+[[ ## pedestrians ## ]]
+{pedestrians}
+
+[[ ## others ## ]]
+{others}
+
+[[ ## completed ## ]]
+
+In adhering to this structure, your objective is:
+        You are a traffic scene analysis expert for an autonomous vehicle system.
+        With over 10 years of experience in traffic scene analysis, you specialize in analyzing traffic scenes from the front camera of the ego vehicle.
+        Your task is to analyze the current traffic scene strictly based on the movable (dynamic) objects level and provide a comprehensive analysis.
+
+        The movable objects level analysis includes:
+        - Vehicles
+        - Pedestrians
+        - Others (e.g., animals, bicycles, shopping carts, any other moving objects)
+
+        Focus on:
+        - Object type
+        - Approximate location and orientation relative to the ego vehicle
+        - Any observable features, potential hazards, anomalies or out-of-place behavior for each object
+
+        Since only one frame is available, avoid making strong assumptions about movement.
+        The goal is to capture all movable objects-related details that could affect the ego vehicle's driving behavior or safety.</code></pre>
+      <p class="code-label">User Message</p>
+<pre><code>[[ ## scene_image ## ]]
+&lt;image&gt;
+
+Respond with the corresponding output fields, starting with the field `[[ ## vehicles ## ]]`,
+then `[[ ## pedestrians ## ]]`, then `[[ ## others ## ]]`,
+and then ending with the marker for `[[ ## completed ## ]]`.</code></pre>
+    </div>
+  </details>
+
+  <details>
+    <summary>Layer 4: Environmental Layer &mdash; <code>EnvironmentalLayerSignature</code></summary>
+    <div class="details-content">
+      <p>Extracts weather, visibility, and lighting conditions. Uses <code>EnvironmentalLayerAnalyzer</code> with <code>dspy.ChainOfThought</code>.</p>
+      <p class="code-label">System Message</p>
+<pre><code>Your input fields are:
+1. `scene_image` (Image): The base64 encoded image of the traffic scene from the front camera of the ego vehicle
+
+Your output fields are:
+1. `weather` (str): Describe the present weather conditions (e.g., light rain, heavy snow, dense fog)
+                                    Include intensity if relevant (light, moderate, heavy).
+2. `visibility` (str): Select one of four visibility levels:
+                                                                                   'clear' (no obstruction), 'light' (slight reduction),
+                                                                                   'moderate' (noticeable but still manageable), or
+                                                                                   'severe' (heavily impaired, only if background or roadside
+                                                                                   features are not clearly visible).
+3. `lighting` (str): Describe lighting conditions, such as daylight, dusk, night, or glare. Include any impact on
+                                     visibility (e.g., sun glare causing partial obstruction).
+
+All interactions will be structured in the following way, with the appropriate values filled in.
+
+[[ ## scene_image ## ]]
+{scene_image}
+
+[[ ## weather ## ]]
+{weather}
+
+[[ ## visibility ## ]]
+{visibility}
+
+[[ ## lighting ## ]]
+{lighting}
+
+[[ ## completed ## ]]
+
+In adhering to this structure, your objective is:
+        You are a traffic scene analysis expert for an autonomous vehicle system.
+        With over 10 years of experience in traffic scene analysis, you specialize in analyzing traffic scenes from the front camera of the ego vehicle.
+        Your task is to analyze the current traffic scene strictly based on the environmental level and provide a comprehensive analysis.
+
+        The environmental level analysis includes:
+        - Weather: Description of the weather conditions (e.g., sunny, light rain, heavy snow, dense fog)
+        - Visibility (clear, light, moderate, severe)
+        - Lighting (daylight, dusk, night, glare)
+
+        Provide enough detail to capture conditions that might affect driving safety or sensor performance.
+        Distinguish normal weather conditions from unusually, truly severe or out-of-distribution scenarios.
+        Avoid labeling normal conditions as anomalies unless they are truly severe.
+
+        The goal is to capture all environmental-related details that could affect the ego vehicle's driving behavior or safety.</code></pre>
+      <p class="code-label">User Message</p>
+<pre><code>[[ ## scene_image ## ]]
+&lt;image&gt;
+
+Respond with the corresponding output fields, starting with the field `[[ ## weather ## ]]`,
+then `[[ ## visibility ## ]]`, then `[[ ## lighting ## ]]`,
+and then ending with the marker for `[[ ## completed ## ]]`.</code></pre>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<!-- DSPY FRAMEWORK DETAILS -->
+<!-- ============================================================ -->
+<section id="dspy">
+  <h2>DSPy Framework Details</h2>
+  <p>We leverage <a href="https://github.com/stanfordnlp/dspy">DSPy</a> for systematic prompt optimization and pipeline composition.</p>
+
+  <h3>Signature Definitions</h3>
+<pre><code>import dspy
+
+class SceneDescription(dspy.Signature):
+    """Extract structured scene description."""
+    image: dspy.Image = dspy.InputField()
+    street_layer: str = dspy.OutputField()
+    infrastructure_layer: str = dspy.OutputField()
+    movable_objects_layer: str = dspy.OutputField()
+    environmental_layer: str = dspy.OutputField()
+
+class AnomalyEvaluation(dspy.Signature):
+    """Evaluate scene for semantic anomalies."""
+    image: dspy.Image = dspy.InputField()
+    description: str = dspy.InputField()
+    classification: str = dspy.OutputField()
+    confidence: float = dspy.OutputField()
+    reasoning: str = dspy.OutputField()</code></pre>
+
+  <h3>Pipeline Module</h3>
+<pre><code>class SAVANTPipeline(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        self.describe = dspy.ChainOfThought(SceneDescription)
+        self.evaluate = dspy.ChainOfThought(AnomalyEvaluation)
+
+    def forward(self, image):
+        desc = self.describe(image=image)
+        full_desc = f"Street: {desc.street_layer}\n"
+        full_desc += f"Infra: {desc.infrastructure_layer}\n"
+        full_desc += f"Objects: {desc.movable_objects_layer}\n"
+        full_desc += f"Env: {desc.environmental_layer}"
+        return self.evaluate(image=image, description=full_desc)</code></pre>
+
+  <h3>Optimization Configuration</h3>
+<pre><code>from dspy.teleprompt import MIPROv2
+
+def anomaly_metric(example, prediction, trace=None):
+    return 1.0 if example.label == \
+        prediction.classification else 0.0
+
+optimizer = MIPROv2(
+    metric=anomaly_metric,
+    num_candidates=10,
+    init_temperature=1.0,
+    num_threads=4
+)
+optimized_pipeline = optimizer.compile(
+    SAVANTPipeline(),
+    trainset=train_examples,
+    max_bootstrapped_demos=4,
+    max_labeled_demos=8
+)</code></pre>
+</section>
+
+<!-- ============================================================ -->
+<!-- EXAMPLE MODEL OUTPUTS -->
+<!-- ============================================================ -->
+<section id="examples">
+  <h2>Example Model Outputs: NFT vs FT vs PFT</h2>
+  <p>We present example outputs from each model variant using Qwen2.5-VL-7B, ordered as: NFT (base model), FT (fine-tuned single-shot), and PFT (pipeline fine-tuned). We use the same image &mdash; not present in the CODA dataset &mdash; across all three methods to demonstrate how SAVANT improves detection performance.</p>
+
+  <div class="figure">
+    <img src="assets/example_anomaly.png" alt="Example anomaly scene" style="max-width:550px;">
+    <div class="caption">Example anomaly scene: Workers in a lift performing maintenance on traffic signals at an icy intersection &mdash; an unusual scene that may confuse the conventional software stack.</div>
+  </div>
+
+  <!-- NFT -->
+  <h3>Base Model Without Fine-tuning (NFT)</h3>
+  <details>
+    <summary>Prompt Template (NFT)</summary>
+    <div class="details-content">
+<pre><code>You are a fault monitor for a visual autonomous vehicle system.
+Your task is to analyze the traffic scene and identify any anomalies that could affect vehicle safety, cause the vehicle to take unsafe actions or violate traffic rules.
+Determine if the scene constitutes a normal observation or an anomaly and explain your reasoning.
+Normal observations do not detrimentally affect the vehicle's performance, whereas anomalies might.
+
+IMPORTANT: You must provide your response in the exact JSON format with ALL required fields:
+{
+  "is_anomaly": true/false,
+  "explanation": "Final explanation of why the scene is or is not anomalous"
+}
+
+Analyze the provided traffic scene image for anomalies. Consider:
+1. Is there anything unusual about this situation?
+2. Does this have an effect on the ego vehicle?
+3. Can this influence the ego vehicle's behavior?
+4. Can the ego vehicle drive safely in this scenario?</code></pre>
+    </div>
+  </details>
+  <div class="prediction-box incorrect">
+    <div class="prediction-label">Prediction: Normal <span class="badge badge-incorrect">Incorrect</span></div>
+  </div>
+<pre><code>{
+  "is_anomaly": false,
+  "explanation": "The scene depicts a typical roadwork situation where
+  workers are performing maintenance on traffic signals. There are no
+  unusual elements that would affect the safety of the ego vehicle.
+  The workers are at a safe distance from the road. The ego vehicle
+  can safely proceed through the intersection as there are no immediate
+  hazards or obstructions."
+}</code></pre>
+  <p>The base model fails to detect the anomaly. It dismisses the workers in the lift as a "typical roadwork situation" and incorrectly concludes the ego vehicle can safely proceed &mdash; not accounting for potentially non-functional traffic lights, collision risk due to temporary lack of signalization, and icy road conditions at the intersection.</p>
+
+  <!-- FT -->
+  <h3>Fine-tuned Single-Shot (FT)</h3>
+  <details>
+    <summary>Prompt Template (FT)</summary>
+    <div class="details-content">
+<pre><code>You are a fault monitor for a visual autonomous vehicle system.
+Your task is to analyze the traffic scene layer by layer and identify any anomalies that could affect vehicle safety, cause the vehicle to take unsafe actions or violate traffic rules.
+For each layer, determine if constitutes a normal observation or an anomaly and explain your reasoning.
+Normal observtions do not detrimentally affect the vehicle's performance, whereas anomalies might.
+
+Finally, provide an overall assessment.
+
+Analyze this traffic scene image and determine if it contains any anomalies that could affect vehicle safety, cause unsafe actions, or violate traffic rules.
+
+Consider all layers:
+- Street Layer: Road geometry, topology, surface, lane markings
+- Infrastructure Layer: Traffic lights, signs, cones, barriers, construction
+- Movable Objects Layer: Vehicles, pedestrians, dynamic entities
+- Environmental Layer: Weather, visibility, lighting
+
+Respond with only: "anomaly" or "normal"</code></pre>
+    </div>
+  </details>
+  <div class="prediction-box correct">
+    <div class="prediction-label">Prediction: Anomaly <span class="badge badge-correct">Correct</span></div>
+  </div>
+<pre><code>anomaly</code></pre>
+  <p>The fine-tuned model has internalized the structured analysis from SAVANT and correctly classifies the scene as anomalous with minimal latency. However, it cannot explain <em>why</em> &mdash; for interpretability, we rely on PFT. A practical deployment could run FT at 10+ FPS for real-time monitoring, engaging PFT on-demand for explanations when anomalies are detected.</p>
+
+  <!-- PFT -->
+  <h3>Pipeline Fine-tuned (PFT)</h3>
+  <details>
+    <summary>Prompt Template &mdash; Phase 1: Scene Description (PFT)</summary>
+    <div class="details-content">
+<pre><code>You are an expert at analyzing traffic scenes for autonomous vehicles. Your task is to provide detailed, structured descriptions across four distinct layers using the optimized framework.
+
+Analyze this traffic scene image using the four-layer framework:
+
+1. **Street Layer**: Assess the road's geometry (lane configuration, curves, gradients), topology (intersections, merges, splits), surface condition (material, damage, wetness), and lane markings (visibility, type, condition).
+
+2. **Infrastructure Layer**: Investigate traffic control devices including traffic lights (state, visibility, positioning), signs (type, condition, placement), cones (placement, condition), barriers (type, condition), and construction sites (legitimacy, safety measures).
+
+3. **Movable Objects Layer**: Observe and describe vehicles (type, position, orientation, behavior), pedestrians (location, movement, safety), and other dynamic objects (animals, debris, unusual items).
+
+4. **Environmental Layer**: Evaluate weather conditions (precipitation, wind, temperature effects), visibility (clear, fog, glare), and lighting (daylight, artificial, shadows).
+
+Provide your response in this exact JSON format:
+
+{
+  "street_layer": {
+    "geometry": "Detailed analysis of road geometry...",
+    "topology": "Detailed analysis of road topology...",
+    "surface": "Detailed analysis of surface condition...",
+    "lane_markings": "Detailed analysis of lane markings..."
+  },
+  "infrastructure_layer": {
+    "traffic_lights": "Analysis of traffic lights or 'None'",
+    "traffic_signs": "Analysis of traffic signs or 'None'",
+    "traffic_cones": "Analysis of traffic cones or 'None'",
+    "traffic_barriers": "Analysis of barriers or 'None'",
+    "construction_sites": "Analysis of construction sites or 'None'"
+  },
+  "movable_objects_layer": {
+    "vehicles": "Analysis of vehicles or 'None'",
+    "pedestrians": "Analysis of pedestrians or 'None'",
+    "others": "Analysis of other objects or 'None'"
+  },
+  "environmental_layer": {
+    "weather": "Analysis of weather conditions",
+    "visibility": "Analysis of visibility conditions",
+    "lighting": "Analysis of lighting conditions"
+  }
+}</code></pre>
+    </div>
+  </details>
+  <details>
+    <summary>Prompt Template &mdash; Phase 2: Multimodal Evaluation (PFT)</summary>
+    <div class="details-content">
+<pre><code>You are a fault monitor for a visual autonomous vehicle system.
+Your task is to analyze the traffic scene layer by layer and identify any anomalies that could affect vehicle safety, cause the vehicle to take unsafe actions or violate traffic rules.
+For each layer, determine if constitutes a normal observation or an anomaly and explain your reasoning.
+Normal observtions do not detrimentally affect the vehicle's performance, whereas anomalies might.
+
+Finally, provide an overall assessment.
+
+Analyze the provided image and scene description for anomalies using systematic layer-by-layer evaluation.
+
+Scene Description:
+{scene_description}
+
+Perform the following analysis:
+
+1. **Reasoning**: Think step by step about potential anomalies in each layer
+2. **Street Layer Analysis**: Analyze street-level anomalies (topology, geometry, surface, lane markings)
+3. **Infrastructure Layer Analysis**: Analyze infrastructure anomalies (traffic lights, signs, cones, barriers, construction)
+4. **Movable Objects Layer Analysis**: Analyze movable object anomalies (vehicles, pedestrians, etc.)
+5. **Environmental Layer Analysis**: Analyze environmental anomalies (weather, visibility)
+
+Provide your assessment in this exact JSON format:
+
+{
+  "reasoning": "Step-by-step reasoning about potential anomalies...",
+  "street_layer_analysis": "Detailed analysis of street layer...",
+  "street_layer_anomaly": true/false,
+  "infrastructure_layer_analysis": "Detailed analysis of infrastructure layer...",
+  "infrastructure_layer_anomaly": true/false,
+  "movable_objects_layer_analysis": "Detailed analysis of movable objects layer...",
+  "movable_objects_layer_anomaly": true/false,
+  "environmental_layer_analysis": "Detailed analysis of environmental layer...",
+  "environmental_layer_anomaly": true/false,
+  "is_anomaly": true/false,
+  "explanation": "Overall explanation considering all layers and their interactions..."
+}</code></pre>
+    </div>
+  </details>
+  <div class="prediction-box correct">
+    <div class="prediction-label">Prediction: Anomaly <span class="badge badge-correct">Correct</span></div>
+  </div>
+
+  <details>
+    <summary>Phase 1 &mdash; Scene Description Output</summary>
+    <div class="details-content">
+<pre><code>{
+  "street_layer": {
+    "geometry": "The road appears to have at least one lane in each
+      direction. The lane widths are not clearly visible due to the
+      snow and ice. The road seems relatively straight with a flat
+      gradient. There are no visible merging lanes or splits.",
+    "topology": "The scene appears to be an urban or suburban road
+      with an intersection. The road type is likely a local road or
+      a collector road. The intersection is a standard four-way
+      intersection with traffic lights.",
+    "surface": "The road surface is primarily asphalt, but it is
+      covered with a layer of snow and ice. The surface condition
+      is slippery due to the ice. There may be potholes or cracks
+      hidden beneath the snow and ice.",
+    "lane_markings": "Lane markings are not clearly visible due to
+      the snow and ice. It is difficult to determine the type,
+      visibility, or condition of the lane markings."
+  },
+  "infrastructure_layer": {
+    "traffic_lights": "There are traffic lights visible in the image.
+      One set is located in the distance, and another set is visible
+      on the right side of the image, near the stop sign. The state
+      of the lights is not clear. They appear to be correctly placed.",
+    "traffic_signs": "A stop sign is visible on the right side of the
+      image. It appears to be correctly placed.",
+    "traffic_cones": "There are a few traffic cones visible in the
+      image. They are placed near the construction site on the right
+      side of the road. They appear to be correctly placed.",
+    "traffic_barriers": "None",
+    "construction_sites": "There is a construction site on the right
+      side of the road. Workers are present, and a truck is parked
+      nearby. The area is marked with traffic cones."
+  },
+  "movable_objects_layer": {
+    "vehicles": "- Car: A dark-colored car is positioned in the center
+      of the road, facing the ego vehicle. It appears to be moving
+      forward.\n- Truck: A black pickup truck is positioned in the
+      intersection, facing slightly to the right.\n- Truck: A white
+      pickup truck is positioned on the right side of the road, near
+      the stop sign, facing slightly to the left.\n- Truck: A red
+      truck is positioned on the left side of the road, facing
+      slightly to the right.",
+    "pedestrians": "- Two workers are in a lift, working on the
+      overhead wires.\n- One worker is standing on the white truck
+      on the right side of the road, working on the stop sign.",
+    "others": "None"
+  },
+  "environmental_layer": {
+    "weather": "Overcast, with snow on the ground.",
+    "visibility": "light",
+    "lighting": "Daylight"
+  }
+}</code></pre>
+    </div>
+  </details>
+
+  <details open>
+    <summary>Phase 2 &mdash; Multimodal Evaluation Output</summary>
+    <div class="details-content">
+<pre><code>{
+  "reasoning": "Layer-by-layer analysis reveals the following:",
+  "street_layer_analysis": "The road surface is slippery due to the snow
+    and ice, which significantly reduces traction. The lane markings are
+    not clearly visible, making it difficult to maintain lane discipline.
+    The presence of an intersection further increases the complexity of
+    the situation.",
+  "street_layer_anomaly": true,
+  "infrastructure_layer_analysis": "The traffic lights and stop sign
+    appear to be correctly placed, but their functionality is uncertain
+    due to the ongoing construction. The construction site itself is a
+    potential hazard, as it may obstruct the road or create unexpected
+    traffic patterns.",
+  "infrastructure_layer_anomaly": true,
+  "movable_objects_layer_analysis": "The presence of workers in the lift
+    and on the truck near the stop sign is a significant hazard. The
+    workers may unexpectedly move into the roadway. The other vehicles
+    appear to be operating normally, but their actions may be affected
+    by the slippery road conditions.",
+  "movable_objects_layer_anomaly": true,
+  "environmental_layer_analysis": "The overcast weather and slippery road
+    surface reduce visibility and traction, respectively. These conditions
+    require increased caution and reduced speed.",
+  "environmental_layer_anomaly": false,
+  "is_anomaly": true,
+  "explanation": "The scene is anomalous due to the combination of the
+    slippery road surface, the presence of workers near the roadway, and
+    the ongoing construction. The slippery road surface reduces traction
+    and increases the risk of skidding. The workers near the roadway pose
+    a risk of unexpected movements into the roadway. The construction site
+    may obstruct the road or create unexpected traffic patterns. This
+    situation is not common and requires the ego vehicle to exercise
+    extreme caution, reduce speed, and be prepared to react to
+    unexpected events."
+}</code></pre>
+    </div>
+  </details>
+  <p>The PFT pipeline provides detailed, explainable layer-by-layer analysis. Unlike NFT which dismissed this as a "typical roadwork situation," PFT correctly flags uncertain traffic light functionality, slippery icy road surfaces, and workers in a lift who may unexpectedly move into the roadway.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- RESOURCES -->
+<!-- ============================================================ -->
+<section id="links">
+  <h2>Resources</h2>
+
+  <div class="resource-group">
+    <h3>Datasets</h3>
+    <div class="resource-list">
+      <a class="resource-item" href="https://huggingface.co/datasets/u94fmn391j/SAVANT-CODALM-small" target="_blank">
+        <span style="font-size:1.4rem;">&#129303;</span>
+        <div><div class="ri-name">CODALM-small</div><div class="ri-desc">100 manually annotated images (50 anomalous, 50 normal) for model selection</div></div>
+      </a>
+      <a class="resource-item" href="https://huggingface.co/datasets/u94fmn391j/SAVANT-CODALM-medium" target="_blank">
+        <span style="font-size:1.4rem;">&#129303;</span>
+        <div><div class="ri-name">CODALM-medium</div><div class="ri-desc">5,078 human-validated annotations with balanced test subset (1,020 samples)</div></div>
+      </a>
+      <a class="resource-item" href="https://huggingface.co/datasets/u94fmn391j/SAVANT-CODALM-large" target="_blank">
+        <span style="font-size:1.4rem;">&#129303;</span>
+        <div><div class="ri-name">CODALM-large</div><div class="ri-desc">9,640 images fully labeled using SAVANT &mdash; largest semantically-annotated anomaly detection dataset</div></div>
+      </a>
+    </div>
+  </div>
+
+  <div class="resource-group">
+    <h3>Models (LoRA Adapters for Qwen2.5-VL-7B)</h3>
+    <div class="resource-list">
+      <a class="resource-item" href="https://huggingface.co/u94fmn391j/SAVANT-scene-description-lora" target="_blank">
+        <span style="font-size:1.4rem;">&#129303;</span>
+        <div><div class="ri-name">Scene Description</div><div class="ri-desc">Phase 1 structured extraction &mdash; generates layered scene descriptions</div></div>
+      </a>
+      <a class="resource-item" href="https://huggingface.co/u94fmn391j/SAVANT-multimodal-evaluation-lora" target="_blank">
+        <span style="font-size:1.4rem;">&#129303;</span>
+        <div><div class="ri-name">Multimodal Evaluation</div><div class="ri-desc">Phase 2 pipeline model &mdash; layer-by-layer anomaly assessment with explanations (PFT)</div></div>
+      </a>
+      <a class="resource-item" href="https://huggingface.co/u94fmn391j/SAVANT-anomaly-classifier-lora" target="_blank">
+        <span style="font-size:1.4rem;">&#129303;</span>
+        <div><div class="ri-name">Anomaly Classifier</div><div class="ri-desc">Single-shot model &mdash; 93.8% accuracy, 90.8% recall, 0.08s inference (FT)</div></div>
+      </a>
+    </div>
+  </div>
+
+  <div class="resource-group">
+    <h3>Code</h3>
+    <div class="resource-list">
+      <div class="resource-item" style="opacity:0.6;cursor:default;">
+        <svg class="ri-icon" width="24" height="24" viewBox="0 0 16 16" fill="#888" xmlns="http://www.w3.org/2000/svg"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        <div><div class="ri-name">Framework Implementation</div><div class="ri-desc">Coming soon</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CITATION -->
+<!-- ============================================================ -->
+<section id="citation">
+  <h2>Citation</h2>
+  <div class="citation-block">
+    <button class="copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.querySelector('.bibtex').textContent).then(()=>{this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)})">Copy</button>
+<span class="bibtex">@inproceedings{anonymous2026savant,
+  title={Can VLMs Unlock Semantic Anomaly Detection? A Framework for Structured Reasoning},
+  author={Anonymous},
+  booktitle={Under Review},
+  year={2026}
+}</span>
+  </div>
+</section>
+
+</div><!-- end container -->
+
+<footer>
+  SAVANT &mdash; Semantic Anomaly Verification/Analysis Toolkit
+</footer>
+
+</body>
+</html>
