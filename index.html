@@ -657,6 +657,9 @@
     <div class="caption">Failure rates (%) across semantic layer combinations for three Qwen2.5-VL-7B variants. Layer abbreviations: S (Street), I (Infrastructure), M (Movable Objects), E (Environmental).</div>
   </div>
 
+  <h3>Computational Cost and Deployment Analysis</h3>
+  <p>Our evaluation reveals fundamental deployment trade-offs. Proprietary models achieve superior performance but require connectivity, have high latency (2.6&ndash;24.9s per query), and incur operational costs. Open models enable local execution at zero cost but underperform without fine-tuning. Our fine-tuned single-shot model achieves competitive performance with single-query efficiency (1 query vs. 5 for the full SAVANT pipeline), addressing both accessibility and performance requirements for autonomous deployment.</p>
+
   <h3>Dataset Distribution</h3>
   <div class="figure">
     <img src="assets/dataset_distribution_recreated.png" alt="Dataset distribution" style="max-width:700px;">
